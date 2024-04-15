@@ -63,7 +63,11 @@ void processes_input() {
     }
 }
 
-int main() {
-    processes_input();
+bool by_arrival_time(process p1, process p2) {
+    return p1.arrival_time < p2.arrival_time;
 }
 
+int main() {
+    processes_input();
+    sort(processes.begin(), processes.end(), by_arrival_time);
+}
