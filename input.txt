@@ -3,9 +3,11 @@ Notes:
 - Values more than number of processes will be ignored
 - Missing values will be 0
 
+******************************************************
+
 Number of processes: 3
-Arrival times: 1 2 3
-CPU bursts: 3 2 1
+Arrival times: 1 5 6
+CPU burst: 2 2 2
 
 Context switch time (milliseconds): 2
 Time quantum for Round Robin: 2
