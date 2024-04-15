@@ -1,7 +1,7 @@
 Notes: 
 - Values shall be space-separated.
-- Values more than number of processes will be ignored
-- Missing values will be 0
+- Values more than number of processes will be ignored.
+- Missing values will be 0.
 
 ******************************************************
 

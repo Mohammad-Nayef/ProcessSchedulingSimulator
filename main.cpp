@@ -9,16 +9,17 @@
 
 using namespace std;
 
-struct process{
+// Process control block
+struct pcb {
     string name;
     int arrival_time, burst;
 };
 
-vector<process> processes;
 int processes_count, context_switch_time, time_quantum;
-const int SLEEPING_INTERVAL = 500;
+const int SLEEPING_INTERVAL = 1; // Milliseconds
+const string CONTEXT_SWITCH = "Context switch", IDLE = "Idle";
 
-void processes_input() {
+void processes_input(vector<pcb> &processes) {
     ifstream input("..\\input.txt");
     string line;
 
@@ -31,7 +32,7 @@ void processes_input() {
 
             for (int i = 0; i < processes_count; i++)
             {
-                process p;
+                pcb p;
                 p.name = "P" + to_string(i + 1);
                 processes.push_back(p);
             }
@@ -67,48 +68,74 @@ void processes_input() {
     }
 }
 
-bool by_arrival_time(process p1, process p2) {
+bool by_arrival_time(pcb p1, pcb p2) {
     return p1.arrival_time < p2.arrival_time;
 }
 
-int main() {
-    processes_input();
-    sort(processes.begin(), processes.end(), by_arrival_time);
+vector<string> FCFS(vector<pcb> processes)
+{
+    vector<string> timeline;
+    cout << "First-Come First-Served timeline:\n\n";
     queue<int> ready_queue;
 
-    for (int time = 0, index = 0; ; time++) {
-        if (index < processes_count && time >= processes[index].arrival_time) {
+    for (int time = 0, index = 0; ;time++)
+    {
+        cout << time << ": ";
+
+        if (index < processes_count && time >= processes[index].arrival_time)
+        {
             ready_queue.push(index);
             index++;
         }
 
-        if (ready_queue.empty()) {
+        if (ready_queue.empty())
+        {
             if (index >= processes_count)
-                return 0;
+                break;
 
-            cout << "idle ";
+            cout << "idle, ";
+            timeline.push_back(IDLE);
             Sleep(SLEEPING_INTERVAL);
             continue;
         }
 
         processes[ready_queue.front()].burst--;
-        cout << processes[ready_queue.front()].name << "-burst ";
-        
-        if (processes[ready_queue.front()].burst == 0) {
+        cout << processes[ready_queue.front()].name << "-burst, ";
+        timeline.push_back(processes[ready_queue.front()].name);
+
+        if (processes[ready_queue.front()].burst == 0)
+        {
             ready_queue.pop();
 
             if (index == processes_count && ready_queue.empty())
-                return 0;
+                break;
 
-            for (int interval = 0; interval < context_switch_time; interval++) {
+            for (int interval = 0; interval < context_switch_time; interval++)
+            {
                 time++;
-                cout << "switching ";
+                cout << time << ": ";
+
+                cout << "switching, ";
+                timeline.push_back(CONTEXT_SWITCH);
                 Sleep(SLEEPING_INTERVAL);
             }
 
             continue;
-        } 
+        }
 
-        Sleep(SLEEPING_INTERVAL);  
+        Sleep(SLEEPING_INTERVAL);
     }
+
+    return timeline;
+}
+
+int main()
+{
+    vector<pcb> processes;
+    processes_input(processes);
+    sort(processes.begin(), processes.end(), by_arrival_time);
+    vector<string> FCFS_timeline = FCFS(processes);
+
+    for(string s: FCFS_timeline)
+        cout << s << ' ' << endl;
 }
