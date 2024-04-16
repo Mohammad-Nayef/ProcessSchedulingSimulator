@@ -6,6 +6,7 @@
 #include <sstream>
 #include <queue>
 #include <windows.h>
+#include <map>
 
 using namespace std;
 
@@ -76,22 +77,18 @@ bool by_name(pcb process1, pcb process2) {
     return process1.name < process2.name;
 }
 
-vector<string> get_FCFS_timeline(vector<pcb> processes)
-{
-    vector<string> timeline;
+vector<string> get_first_come_first_served_timeline(vector<pcb> processes) {
     cout << "First-Come First-Served live simulation timeline:\n\n";
+    vector<string> timeline;
     queue<int> ready_queue;
 
-    for (int time = 0, index = 0; ;time++)
-    {
-        if (index < processes_count && time >= processes[index].arrival_time)
-        {
+    for (int time = 0, index = 0; ; time++) {
+        if (index < processes_count && time >= processes[index].arrival_time) {
             ready_queue.push(index);
             index++;
         }
 
-        if (ready_queue.empty())
-        {
+        if (ready_queue.empty()) {
             if (index >= processes_count)
                 break;
 
@@ -106,22 +103,80 @@ vector<string> get_FCFS_timeline(vector<pcb> processes)
         cout << time << ": " << processes[ready_queue.front()].name << "-burst, ";
         timeline.push_back(processes[ready_queue.front()].name);
 
-        if (processes[ready_queue.front()].burst_time == 0)
-        {
+        if (processes[ready_queue.front()].burst_time == 0) {
             ready_queue.pop();
 
             if (index == processes_count && ready_queue.empty())
                 break;
 
-            for (int interval = 0; interval < context_switch_time; interval++)
-            {
+            for (int interval = 0; interval < context_switch_time; interval++) {
                 time++;
                 Sleep(SLEEPING_INTERVAL);
                 cout << time << ": switching, ";
                 timeline.push_back(CONTEXT_SWITCH);
             }
+        }
+    }
 
+    cout << "\n\n";
+    return timeline;
+}
+
+vector<string> get_round_robin_timeline(vector<pcb> processes) {
+    cout << "Round Robin live simulation timeline:\n\n";
+    vector<string> timeline;
+    queue<int> ready_queue;
+    map<string, int> chunks;
+
+    for (int i = 0; i < processes_count; i++)
+        chunks[processes[i].name] = time_quantum;
+
+    for (int time = 0, index = 0; ; time++) {
+        if (index < processes_count && time >= processes[index].arrival_time) {
+            ready_queue.push(index);
+            index++;
+        }
+
+        if (ready_queue.empty()) {
+            if (index >= processes_count)
+                break;
+
+            Sleep(SLEEPING_INTERVAL);
+            cout << time << ": idle, ";
+            timeline.push_back(IDLE);
             continue;
+        }
+
+        processes[ready_queue.front()].burst_time--;
+        chunks[processes[ready_queue.front()].name]--;
+        Sleep(SLEEPING_INTERVAL);
+        cout << time << ": " << processes[ready_queue.front()].name << "-burst, ";
+        timeline.push_back(processes[ready_queue.front()].name);
+
+        if (processes[ready_queue.front()].burst_time == 0) {
+            ready_queue.pop();
+
+            if (index == processes_count && ready_queue.empty())
+                break;
+
+            for (int interval = 0; interval < context_switch_time; interval++) {
+                time++;
+                Sleep(SLEEPING_INTERVAL);
+                cout << time << ": switching, ";
+                timeline.push_back(CONTEXT_SWITCH);
+            }
+        }
+        else if (chunks[processes[ready_queue.front()].name] == 0) {
+            chunks[processes[ready_queue.front()].name] = time_quantum;
+            ready_queue.push(ready_queue.front());
+            ready_queue.pop();
+
+            for (int interval = 0; interval < context_switch_time; interval++) {
+                time++;
+                Sleep(SLEEPING_INTERVAL);
+                cout << time << ": switching, ";
+                timeline.push_back(CONTEXT_SWITCH);
+            }
         }
     }
 
@@ -211,7 +266,8 @@ int main() {
     processes_input(processes);
     sort(processes.begin(), processes.end(), by_arrival_time);
 
-    vector<string> timeline = get_FCFS_timeline(processes);
+    // vector<string> timeline = get_first_come_first_served_timeline(processes);
+    vector<string> timeline = get_round_robin_timeline(processes);
 
     set_start_and_finish_time(processes, timeline);
     sort(processes.begin(), processes.end(), by_name);
