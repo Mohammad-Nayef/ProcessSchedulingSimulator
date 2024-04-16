@@ -6,8 +6,8 @@ Notes:
 ******************************************************
 
 Number of processes: 6
-Arrival times:  0 1 5 7 10 3
-CPU burst: 5 2 3 4 5 4
+Arrival times: 6 2 8 0 1 10
+CPU burst: 8 5 6 9 4 2
 
 Context switch time (milliseconds): 0
 Time quantum for Round Robin: 3

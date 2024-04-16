@@ -77,6 +77,17 @@ bool by_name(pcb process1, pcb process2) {
     return process1.name < process2.name;
 }
 
+void context_switch(int &time, vector<string> &timeline)
+{
+    for (int interval = 0; interval < context_switch_time; interval++)
+    {
+        time++;
+        Sleep(SLEEPING_INTERVAL);
+        cout << time << ": switching, ";
+        timeline.push_back(CONTEXT_SWITCH);
+    }
+}
+
 vector<string> get_first_come_first_served_timeline(vector<pcb> processes) {
     cout << "First-Come First-Served live simulation timeline:\n\n";
     vector<string> timeline;
@@ -109,12 +120,7 @@ vector<string> get_first_come_first_served_timeline(vector<pcb> processes) {
             if (index == processes_count && ready_queue.empty())
                 break;
 
-            for (int interval = 0; interval < context_switch_time; interval++) {
-                time++;
-                Sleep(SLEEPING_INTERVAL);
-                cout << time << ": switching, ";
-                timeline.push_back(CONTEXT_SWITCH);
-            }
+            context_switch(time, timeline);
         }
     }
 
@@ -126,10 +132,10 @@ vector<string> get_round_robin_timeline(vector<pcb> processes) {
     cout << "Round Robin live simulation timeline:\n\n";
     vector<string> timeline;
     queue<int> ready_queue;
-    map<string, int> chunks;
+    map<string, int> quantum;
 
     for (int i = 0; i < processes_count; i++)
-        chunks[processes[i].name] = time_quantum;
+        quantum[processes[i].name] = time_quantum;
 
     for (int time = 0, index = 0; ; time++) {
         if (index < processes_count && time >= processes[index].arrival_time) {
@@ -148,7 +154,7 @@ vector<string> get_round_robin_timeline(vector<pcb> processes) {
         }
 
         processes[ready_queue.front()].burst_time--;
-        chunks[processes[ready_queue.front()].name]--;
+        quantum[processes[ready_queue.front()].name]--;
         Sleep(SLEEPING_INTERVAL);
         cout << time << ": " << processes[ready_queue.front()].name << "-burst, ";
         timeline.push_back(processes[ready_queue.front()].name);
@@ -159,24 +165,14 @@ vector<string> get_round_robin_timeline(vector<pcb> processes) {
             if (index == processes_count && ready_queue.empty())
                 break;
 
-            for (int interval = 0; interval < context_switch_time; interval++) {
-                time++;
-                Sleep(SLEEPING_INTERVAL);
-                cout << time << ": switching, ";
-                timeline.push_back(CONTEXT_SWITCH);
-            }
+            context_switch(time, timeline);
         }
-        else if (chunks[processes[ready_queue.front()].name] == 0) {
-            chunks[processes[ready_queue.front()].name] = time_quantum;
+        else if (quantum[processes[ready_queue.front()].name] == 0) {
+            quantum[processes[ready_queue.front()].name] = time_quantum;
             ready_queue.push(ready_queue.front());
             ready_queue.pop();
 
-            for (int interval = 0; interval < context_switch_time; interval++) {
-                time++;
-                Sleep(SLEEPING_INTERVAL);
-                cout << time << ": switching, ";
-                timeline.push_back(CONTEXT_SWITCH);
-            }
+            context_switch(time, timeline);
         }
     }
 
