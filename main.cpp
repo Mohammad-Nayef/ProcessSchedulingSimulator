@@ -129,69 +129,96 @@ vector<string> get_FCFS_timeline(vector<pcb> processes)
     return timeline;
 }
 
-int main()
-{
-    vector<pcb> processes;
-    processes_input(processes);
-    sort(processes.begin(), processes.end(), by_arrival_time);
-    vector<string> timeline = get_FCFS_timeline(processes);
+void print_gantt_chart(vector<string> timeline) {
     int i;
-    cout << "Gantt chart for FCFS:\n\n";
+    cout << "Gantt chart:\n";
 
     for (i = 0; i < timeline.size(); i++) {
-        cout << i << '\t' << timeline[i] << '\t';
+        cout << i << "   " << timeline[i] << "   ";
 
         for (int j = i; j < timeline.size(); j++) {
-            if (j + 1 < timeline.size() && timeline[j] == timeline[j + 1]) 
-                    i++;
+            if (j + 1 < timeline.size() && timeline[j] == timeline[j + 1])
+                i++;
             else break;
         }
-     }
+    }
 
     cout << i << "\n\n";
+}
 
+void set_start_and_finish_time(vector<pcb> &processes, vector<string> timeline) {
     for (int i = 0; i < processes_count; i++) {
-        for (int j = 0 ; j < timeline.size(); j++) {
+        for (int j = 0; j < timeline.size(); j++) {
             if (processes[i].name == timeline[j]) {
                 processes[i].start_time = j;
                 break;
             }
         }
 
-        for (int j = timeline.size() - 1; j > 0; j--) {
+        for (int j = timeline.size() - 1; j >= 0; j--) {
             if (processes[i].name == timeline[j]) {
                 processes[i].finish_time = j + 1;
                 break;
             }
         }
     }
-    
-    sort(processes.begin(), processes.end(), by_name);
+}
+
+void print_finish_time_for_each_process(vector<pcb> processes) {
     cout << "Finish time for each process:\n";
 
-    for (int i = 0; i < processes_count; i++) 
+    for (int i = 0; i < processes_count; i++)
         cout << processes[i].name << ": " << processes[i].finish_time << endl;
 
-    cout << "\nWaiting time for each process:\n";
+    cout << endl;
+}
+
+void print_waiting_time_for_each_process(vector<pcb> processes) {
+    cout << "Waiting time for each process:\n";
 
     for (int i = 0; i < processes_count; i++) {
         cout << processes[i].name << ": " << 
             processes[i].finish_time - processes[i].burst_time - processes[i].arrival_time << endl;
     }
 
-    cout << "\nTurnaround time for each process:\n";
+    cout << endl;
+}
+
+void print_turnaround_time_for_each_process(vector<pcb> processes) {
+    cout << "Turnaround time for each process:\n";
 
     for (int i = 0; i < processes_count; i++) {
         cout << processes[i].name << ": " << 
             processes[i].finish_time - processes[i].arrival_time << endl;
     }
 
-    cout << "\nCPU utilization: ";
+    cout << endl;
+}
+
+void print_cpu_utilization(vector<pcb> processes, vector<string> timeline) {
+    cout << "CPU utilization: ";
     int bursts_sum = 0;
 
     for (int i = 0; i < processes_count; i++) {
         bursts_sum += processes[i].burst_time;
     }
 
-    cout << (float(bursts_sum) / timeline.size()) * 100 << "%\n";
+    cout << (float(bursts_sum) / timeline.size()) * 100 << "%\n\n";
+}
+
+int main() {
+    vector<pcb> processes;
+    processes_input(processes);
+    sort(processes.begin(), processes.end(), by_arrival_time);
+
+    vector<string> timeline = get_FCFS_timeline(processes);
+
+    set_start_and_finish_time(processes, timeline);
+    sort(processes.begin(), processes.end(), by_name);
+
+    print_gantt_chart(timeline);
+    print_finish_time_for_each_process(processes);
+    print_waiting_time_for_each_process(processes);
+    print_turnaround_time_for_each_process(processes);
+    print_cpu_utilization(processes, timeline);
 }
