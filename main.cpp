@@ -7,6 +7,7 @@
 #include <queue>
 #include <windows.h>
 #include <map>
+#include <climits>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ struct pcb {
 };
 
 int processes_count, context_switch_time, time_quantum;
-const int SLEEPING_INTERVAL = 1; // Milliseconds
+const int SLEEPING_INTERVAL = 0; // Milliseconds
 const string CONTEXT_SWITCH = "CS", IDLE = "Idle";
 
 void processes_input(vector<pcb> &processes) {
@@ -47,9 +48,9 @@ void processes_input(vector<pcb> &processes) {
                 stream >> processes[i].arrival_time;
         }
 
-        if (line.substr(0, 10) == "CPU burst:")
+        if (line.substr(0, 11) == "CPU bursts:")
         {
-            stringstream stream(line.substr(10));
+            stringstream stream(line.substr(11));
 
             for (int i = 0; i < processes_count; i++)
                 stream >> processes[i].burst_time;
@@ -180,6 +181,55 @@ vector<string> get_round_robin_timeline(vector<pcb> processes) {
     return timeline;
 }
 
+vector<string> get_shortest_remaining_time_timeline(vector<pcb> processes) {
+    cout << "Shortest Remaining Time live simulation timeline:\n\n";
+    vector<string> timeline;
+    vector<pcb> ready_queue;
+
+    for (int time = 0, index = 0; ; time++) {
+        if (index < processes_count && time >= processes[index].arrival_time) {
+            ready_queue.push_back(processes[index]);
+            index++;
+        }
+
+        if (ready_queue.empty()) {
+            if (index >= processes_count)
+                break;
+
+            Sleep(SLEEPING_INTERVAL);
+            cout << time << ": idle, ";
+            timeline.push_back(IDLE);
+            continue;
+        }
+        
+        int min_remaining_time = INT_MAX, min_process = 0;
+        
+        for (int i = 0; i < ready_queue.size(); i++) {
+            if (ready_queue[i].burst_time < min_remaining_time) {
+                min_remaining_time = ready_queue[i].burst_time;
+                min_process = i;
+            }
+        }
+
+        ready_queue[min_process].burst_time--;
+        Sleep(SLEEPING_INTERVAL);
+        cout << time << ": " << ready_queue[min_process].name << "-burst, ";
+        timeline.push_back(ready_queue[min_process].name);
+
+        if (ready_queue[min_process].burst_time == 0) {
+            ready_queue.erase(ready_queue.begin() + min_process);
+
+            if (index == processes_count && ready_queue.empty())
+                break;
+
+            context_switch(time, timeline);
+        }
+    }
+
+    cout << "\n\n";
+    return timeline;
+}
+
 void print_gantt_chart(vector<string> timeline) {
     int i;
     cout << "Gantt chart:\n";
@@ -257,14 +307,7 @@ void print_cpu_utilization(vector<pcb> processes, vector<string> timeline) {
     cout << (float(bursts_sum) / timeline.size()) * 100 << "%\n\n";
 }
 
-int main() {
-    vector<pcb> processes;
-    processes_input(processes);
-    sort(processes.begin(), processes.end(), by_arrival_time);
-
-    // vector<string> timeline = get_first_come_first_served_timeline(processes);
-    vector<string> timeline = get_round_robin_timeline(processes);
-
+void calculate_and_print_results(vector<pcb> processes, vector<string> timeline) {
     set_start_and_finish_time(processes, timeline);
     sort(processes.begin(), processes.end(), by_name);
 
@@ -273,4 +316,18 @@ int main() {
     print_waiting_time_for_each_process(processes);
     print_turnaround_time_for_each_process(processes);
     print_cpu_utilization(processes, timeline);
+    cout << "*****************************************************\n";
+}
+
+int main() {
+    vector<pcb> processes;
+    processes_input(processes);
+    sort(processes.begin(), processes.end(), by_arrival_time);
+
+    vector<string> fcfs_timeline = get_first_come_first_served_timeline(processes);
+    calculate_and_print_results(processes, fcfs_timeline);
+    vector<string> rr_timeline = get_round_robin_timeline(processes);
+    calculate_and_print_results(processes, rr_timeline);
+    vector<string> srt_timeline = get_shortest_remaining_time_timeline(processes);
+    calculate_and_print_results(processes, srt_timeline);
 }
