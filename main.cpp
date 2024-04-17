@@ -18,52 +18,45 @@ struct pcb {
 };
 
 int processes_count, context_switch_time, time_quantum;
-const int SLEEPING_INTERVAL = 0; // Milliseconds
+const int SLEEPING_INTERVAL = 300; // Milliseconds
 const string CONTEXT_SWITCH = "CS", IDLE = "Idle";
 
 void processes_input(vector<pcb> &processes) {
     ifstream input("..\\input.txt");
     string line;
 
-    while (getline(input, line))
-    {
-        if (line.substr(0, 20) == "Number of processes:")
-        {
+    while (getline(input, line)) {
+        if (line.substr(0, 20) == "Number of processes:") {
             stringstream stream(line.substr(20));
             stream >> processes_count;
 
-            for (int i = 0; i < processes_count; i++)
-            {
+            for (int i = 0; i < processes_count; i++) {
                 pcb p;
                 p.name = "P" + to_string(i + 1);
                 processes.push_back(p);
             }
         }
 
-        if (line.substr(0, 14) == "Arrival times:")
-        {
+        if (line.substr(0, 14) == "Arrival times:") {
             stringstream stream(line.substr(14));
 
             for (int i = 0; i < processes_count; i++)
                 stream >> processes[i].arrival_time;
         }
 
-        if (line.substr(0, 11) == "CPU bursts:")
-        {
+        if (line.substr(0, 11) == "CPU bursts:") {
             stringstream stream(line.substr(11));
 
             for (int i = 0; i < processes_count; i++)
                 stream >> processes[i].burst_time;
         }
 
-        if (line.substr(0, 35) == "Context switch time (milliseconds):")
-        {
+        if (line.substr(0, 35) == "Context switch time (milliseconds):") {
             stringstream stream(line.substr(35));
             stream >> context_switch_time;
         }
 
-        if (line.substr(0, 29) == "Time quantum for Round Robin:")
-        {
+        if (line.substr(0, 29) == "Time quantum for Round Robin:") {
             stringstream stream(line.substr(29));
             stream >> time_quantum;
         }
@@ -78,10 +71,8 @@ bool by_name(pcb process1, pcb process2) {
     return process1.name < process2.name;
 }
 
-void context_switch(int &time, vector<string> &timeline)
-{
-    for (int interval = 0; interval < context_switch_time; interval++)
-    {
+void context_switch(int &time, vector<string> &timeline) {
+    for (int interval = 0; interval < context_switch_time; interval++) {
         time++;
         Sleep(SLEEPING_INTERVAL);
         cout << time << ": switching, ";
